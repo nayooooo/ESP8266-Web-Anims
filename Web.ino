@@ -5,8 +5,8 @@
 
 #include "fs_tools.h"
 
-const String ssid = "MM67987";
-const String password = "XXYJXZ316";
+const String ssid = "XXXX";
+const String password = "XXXX";
 ESP8266WebServer web_server(80);
 
 void web_homePage(void)
@@ -27,27 +27,39 @@ void web_echoPage(void)
     web_server.send(200, "text/html", message.c_str());
 }
 
-void web_animPage(void)
+void web_animPage_weatherwatch(void)
 {
-    File f = SPIFFS.open("/index.html", "r");
+    File f = SPIFFS.open("/anim/WeatherWatch/index.html", "r");
     web_server.streamFile(f, "text/html");
 }
 
-void web_animPage_css(void)
+void web_animPage_weatherwatch_css(void)
 {
-    File f = SPIFFS.open("/style.css", "r");
+    File f = SPIFFS.open("/anim/WeatherWatch/style.css", "r");
     web_server.streamFile(f, "text/css");
 }
 
-void web_animPage_js(void)
+void web_animPage_weatherwatch_js(void)
 {
-    File f = SPIFFS.open("/main.js", "r");
+    File f = SPIFFS.open("/anim/WeatherWatch/main.js", "r");
     web_server.streamFile(f, "application/javascript");
+}
+
+void web_animPage_flowstair(void)
+{
+    File f = SPIFFS.open("/anim/FlowStair/index.html", "r");
+    web_server.streamFile(f, "text/html");
+}
+
+void web_animPage_flowstair_css(void)
+{
+    File f = SPIFFS.open("/anim/FlowStair/style.css", "r");
+    web_server.streamFile(f, "text/css");
 }
 
 void web_handleGETTemp(void)
 {
-    web_server.sendHeader("Content-Type", "text/html; charset=utf-8");
+    web_server.sendHeader("Content-Type", "text/plain; charset=utf-8");
     web_server.send(200, "text/plain", "20℃");
 }
 
@@ -77,9 +89,11 @@ void setup() {
     web_server.on("/", web_homePage);
     web_server.on("/home", web_homePage);
     web_server.on("/echo", web_echoPage);
-    web_server.on("/anim", web_animPage);
-    web_server.on("/style.css", web_animPage_css);
-    web_server.on("/main.js", web_animPage_js);
+    web_server.on("/anim/weatherwatch", web_animPage_weatherwatch);
+    web_server.on("/anim/weatherwatch/style.css", web_animPage_weatherwatch_css);
+    web_server.on("/anim/weatherwatch/main.js", web_animPage_weatherwatch_js);
+    web_server.on("/anim/flowstair", web_animPage_flowstair);
+    web_server.on("/anim/flowstair/style.css", web_animPage_flowstair_css);
     web_server.on("/data/temp", web_handleGETTemp);
     web_server.begin();
     Serial.println("HTTP server started!");
