@@ -5,6 +5,8 @@
 
 #include "fs_tools.h"
 
+#include "at_user.h"
+
 const String ssid = "XXXX";
 const String password = "XXXX";
 ESP8266WebServer web_server(80);
@@ -63,29 +65,34 @@ void web_handleGETTemp(void)
     web_server.send(200, "text/plain", "20℃");
 }
 
+static bool web_server_has_begin = false;
+
 void setup() {
   // put your setup code here, to run once:
     Serial.begin(115200UL);
 
+    // 开启SPIFFS
     if (fs_tools_FS_begin()) {
         Serial.println("SPIFFS start success!");
     } else {
         Serial.println("SPIFFS start failed!");
     }
 
+    // 连接Wi-Fi
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
     uint8_t err_times = 0;
     while (WiFi.status() != WL_CONNECTED) {
         err_times++;
-        if (err_times >= 100) while (true);
+        if (err_times >= 100) break;
         Serial.print(".");
-        delay(200);
+        delay(100);
     }
     Serial.println();
     Serial.print("IP: ");
     Serial.println(WiFi.localIP());
 
+    // 设置并开启Web服务器
     web_server.on("/", web_homePage);
     web_server.on("/home", web_homePage);
     web_server.on("/echo", web_echoPage);
@@ -95,11 +102,27 @@ void setup() {
     web_server.on("/anim/flowstair", web_animPage_flowstair);
     web_server.on("/anim/flowstair/style.css", web_animPage_flowstair_css);
     web_server.on("/data/temp", web_handleGETTemp);
-    web_server.begin();
-    Serial.println("HTTP server started!");
+    if (WiFi.status() == WL_CONNECTED) {
+        web_server.begin();
+        web_server_has_begin = true;
+        Serial.println("HTTP server started!");
+    } else {
+        Serial.println("HTTP server start later...");
+    }
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-    web_server.handleClient();
+  // put your main code here, to run repeated
+
+    at.handleAuto();
+
+    if (WiFi.status() == WL_CONNECTED) {
+        if (web_server_has_begin) {
+            web_server.handleClient();
+        } else {
+            web_server.begin();
+            web_server_has_begin = true;
+            Serial.println("HTTP server started!");
+        }
+    }
 }
